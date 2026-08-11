@@ -7,6 +7,10 @@ cart_bp = Blueprint('cart', __name__)
 def _get_cart_identifiers():
     user_id = current_user.id if current_user.is_authenticated else None
     session_id = session.get('session_id') if not user_id else None
+    if not user_id and not session_id:
+        import uuid
+        session_id = str(uuid.uuid4())
+        session['session_id'] = session_id
     return user_id, session_id
 
 @cart_bp.route('/cart')
