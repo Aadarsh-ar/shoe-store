@@ -79,8 +79,10 @@ def create_app(config_name=None):
 
     @app.errorhandler(500)
     def internal_server_error(e):
+        import traceback
+        tb = traceback.format_exc()
         if request.path.startswith('/api/'):
-            return jsonify({'error': 'Internal server error'}), 500
+            return jsonify({'error': 'Internal server error', 'details': str(e), 'traceback': tb}), 500
         return render_template('errors/500.html'), 500
 
     return app
