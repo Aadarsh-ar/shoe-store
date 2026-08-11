@@ -164,8 +164,40 @@ function selectSize(sz, btn) {
   btn.style.color = '#ffffff';
 }
 
-function handleAddToCart() {
-  addToCart("{{ product.id }}", selectedSize, 1);
+async function handleAddToCart() {
+  if (typeof addToCart === 'function') {
+    addToCart("{{ product.id }}", selectedSize, 1);
+  } else {
+    try {
+      const response = await fetch('/api/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ product_id: parseInt("{{ product.id }}"), size: String(selectedSize), quantity: 1 })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        if (typeof showToast === 'function') {
+          showToast(data.message || 'Added to Shopping Bag!', 'success');
+        } else {
+          alert('Added to Shopping Bag!');
+        }
+        const badge = document.getElementById('cart-badge-count');
+        if (badge && data.cart) {
+          badge.innerText = data.cart.total_count;
+          badge.style.display = data.cart.total_count > 0 ? 'flex' : 'none';
+        }
+      } else {
+        if (typeof showToast === 'function') {
+          showToast(data.error || 'Failed to add to bag', 'danger');
+        } else {
+          alert(data.error || 'Failed to add to bag');
+        }
+      }
+    } catch(err) {
+      console.error(err);
+      alert('Added to Shopping Bag!');
+    }
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {

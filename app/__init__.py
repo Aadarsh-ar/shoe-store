@@ -7,7 +7,11 @@ def create_app(config_name=None):
     if config_name is None:
         config_name = os.getenv('FLASK_ENV', 'development')
 
-    app = Flask(__name__)
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    template_dir = os.path.join(base_dir, 'app', 'templates')
+    static_dir = os.path.join(base_dir, 'app', 'static')
+
+    app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
     app.config.from_object(config_by_name.get(config_name, config_by_name['default']))
 
     # Initialize Flask Extensions
@@ -71,12 +75,12 @@ def create_app(config_name=None):
     def page_not_found(e):
         if request.path.startswith('/api/'):
             return jsonify({'error': 'Resource not found'}), 404
-        return render_template('404.html'), 404
+        return render_template('errors/404.html'), 404
 
     @app.errorhandler(500)
     def internal_server_error(e):
         if request.path.startswith('/api/'):
             return jsonify({'error': 'Internal server error'}), 500
-        return render_template('500.html'), 500
+        return render_template('errors/500.html'), 500
 
     return app
