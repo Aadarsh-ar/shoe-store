@@ -35,9 +35,7 @@
         <li><a href="{{ url_for('products.catalogue', gender='Kids') }}" class="{% if current_filters and current_filters.gender == 'Kids' %}active{% endif %}">Kids</a></li>
         <li><a href="{{ url_for('products.catalogue', collection='new-releases') }}" class="{% if current_filters and current_filters.collection == 'new-releases' %}active{% endif %}">New Releases</a></li>
         <li><a href="{{ url_for('products.catalogue') }}" class="{% if request.endpoint == 'products.catalogue' and not current_filters.gender and not current_filters.collection %}active{% endif %}">Collections</a></li>
-        {% if current_user.is_authenticated and current_user.is_admin() %}
-        <li><a href="{{ url_for('admin.dashboard') }}" style="color: var(--accent-orange); font-weight:700;">Admin Panel</a></li>
-        {% endif %}
+
       </ul>
 
       <!-- Right Action Icons -->
