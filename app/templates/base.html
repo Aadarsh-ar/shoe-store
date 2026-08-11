@@ -9,6 +9,7 @@
   {% if current_user.is_authenticated and current_user.is_admin() %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
   {% endif %}
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
   {% block extra_css %}{% endblock %}
 </head>
 <body>
