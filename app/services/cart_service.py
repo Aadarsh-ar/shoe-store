@@ -29,14 +29,6 @@ class CartService:
 
     @classmethod
     def add_to_cart(cls, product_id, size, quantity=1, user_id=None, session_id=None):
-        try:
-            if Product.query.count() == 0:
-                db.create_all()
-                from seed import seed_database
-                seed_database()
-        except Exception as e:
-            print("Serverless auto-seed warning:", e)
-
         product = db.session.get(Product, product_id)
         if not product:
             return False, "Product not found."

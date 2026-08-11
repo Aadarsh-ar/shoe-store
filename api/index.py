@@ -1,8 +1,18 @@
 import os
 import sys
+import tempfile
 
 # Ensure root project directory is in python path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, root_dir)
+
+# Force VERCEL env flag so config.py writes DB to /tmp
+os.environ.setdefault('VERCEL', '1')
+
+# Explicitly set DATABASE_URL to a writable /tmp path if not already set
+if not os.environ.get('DATABASE_URL'):
+    db_path = os.path.join(tempfile.gettempdir(), 'shoestore.db')
+    os.environ['DATABASE_URL'] = f'sqlite:///{db_path}'
 
 from app import create_app, db
 
