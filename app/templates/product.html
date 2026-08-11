@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - ShoeStore{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 40px; padding-bottom: 100px;">
+
+  <!-- Breadcrumb -->
+  <div style="font-family: var(--font-heading); font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: var(--text-muted); text-transform: uppercase; margin-bottom: 24px;">
+    <a href="{{ url_for('main.index') }}">HOME</a> / <a href="{{ url_for('products.catalogue') }}">FOOTWEAR</a> / <span style="color: var(--text-primary);">{{ product.name }}</span>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 60px; align-items: start;">
+
+    <!-- Left: Product Image Gallery & Thumbnails -->
+    <div>
+      <div style="background: #f4f4f5; border: 1px solid var(--border-color); width: 100%; aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; margin-bottom: 16px; border-radius: var(--radius-sm);">
+        {% if product.discount_price %}
+        <span class="badge-tag badge-sale" style="font-size: 10px; padding: 6px 12px; top: 16px; left: 16px;">SPECIAL DROP</span>
+        {% endif %}
+
+        <img src="{{ product.image_url }}" alt="{{ product.name }}" id="main-product-img" style="width: 85%; height: 85%; object-fit: contain; transition: transform 0.4s ease;">
+      </div>
+
+      <!-- Thumbnail switcher -->
+      <div style="display: flex; gap: 12px;">
+        <div onclick="switchImage('{{ product.image_url }}')" style="width: 80px; height: 80px; background: #f4f4f5; border: 2px solid var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 6px; border-radius: var(--radius-sm);">
+          <img src="{{ product.image_url }}" alt="Angle 1" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+        </div>
+        <div onclick="switchImage('/static/images/promo_shoe.svg')" style="width: 80px; height: 80px; background: #f4f4f5; border: 1px solid var(--border-color); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 6px; border-radius: var(--radius-sm);">
+          <img src="/static/images/promo_shoe.svg" alt="Angle 2" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+        </div>
+        <div onclick="switchImage('/static/images/hero_shoe.svg')" style="width: 80px; height: 80px; background: #f4f4f5; border: 1px solid var(--border-color); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 6px; border-radius: var(--radius-sm);">
+          <img src="/static/images/hero_shoe.svg" alt="Angle 3" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Product Information & Purchase Panel -->
+    <div>
+      <div style="font-family: var(--font-heading); font-size: 12px; font-weight: 800; color: var(--text-muted); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px;">
+        {{ product.brand }} • {{ product.gender }}'S ATHLETIC FOOTWEAR
+      </div>
+      <h1 style="font-size: 38px; font-weight: 900; line-height: 1.05; margin-bottom: 16px; color: var(--text-primary);">{{ product.name }}</h1>
+
+      <!-- Pricing -->
+      <div style="display: flex; align-items: baseline; gap: 16px; margin-bottom: 24px;">
+        <span style="font-size: 30px; font-weight: 800; font-family: var(--font-heading); color: var(--text-primary);">${{ "%.2f"|format(product.effective_price) }}</span>
+        {% if product.discount_price %}
+        <span style="font-size: 18px; color: var(--text-muted); text-decoration: line-through;">${{ "%.2f"|format(product.price) }}</span>
+        <span style="color: var(--accent-red); font-family: var(--font-heading); font-size: 12px; font-weight: 800;">SAVE ${{ "%.2f"|format(product.price - product.discount_price) }}</span>
+        {% endif %}
+      </div>
+
+      <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color);">
+        COLORWAY: <strong style="color: var(--text-primary);">{{ product.color }}</strong>
+      </div>
+
+      <p style="color: var(--text-secondary); font-size: 15px; line-height: 1.7; margin-bottom: 32px;">
+        {{ product.description }}
+      </p>
+
+      <!-- Shoe Size Selector -->
+      <div style="margin-bottom: 32px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <label style="font-family: var(--font-heading); font-size: 12px; font-weight: 800; letter-spacing: 0.08em;">SELECT SIZE (US)</label>
+          <button type="button" onclick="showToast('Standard true-to-size performance fit.', 'info')" style="background:none; border:none; color: var(--text-secondary); font-family: var(--font-heading); font-size: 11px; font-weight: 800; cursor: pointer; text-decoration: underline;">
+            SIZE GUIDE
+          </button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;" id="size-selector-wrap">
+          {% for sz in product.sizes_list %}
+          <button type="button" class="size-btn btn btn-secondary" data-size="{{ sz }}" onclick="selectSize('{{ sz }}', this)" style="padding: 14px 0;">
+            {{ sz }}
+          </button>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        {% if product.stock_quantity > 0 %}
+        <button class="btn btn-primary btn-lg" onclick="handleAddToCart()">
+          ADD TO BAG
+        </button>
+
+        <button class="btn btn-dark btn-lg" onclick="handleAddToCart(); setTimeout(() => window.location.href='/checkout', 400);">
+          BUY NOW
+        </button>
+        {% else %}
+        <button class="btn btn-secondary btn-lg" style="opacity: 0.5;" disabled>
+          OUT OF STOCK
+        </button>
+        {% endif %}
+
+        {% if current_user.is_authenticated %}
+        <button class="btn btn-secondary" onclick="toggleWishlist('{{ product.id }}', this)">
+          ♥ SAVE TO WISHLIST
+        </button>
+        {% endif %}
+      </div>
+
+      <!-- Free Shipping Notice -->
+      <div style="margin-top: 32px; padding: 20px; background: #fafafa; border: 1px solid var(--border-color); font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 14px;">
+        <span style="font-size: 20px;">⚡</span>
+        <div>
+          <strong style="color: var(--text-primary);">FREE EXPRESS SHIPPING & RETURNS</strong>
+          <div>Free standard delivery on orders over $100. 30-day hassle-free returns.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Related Shoes Carousel -->
+  {% if related_products %}
+  <div style="margin-top: 100px; border-top: 1px solid var(--border-color); padding-top: 60px;">
+    <div class="section-header">
+      <h2 class="section-title">YOU MIGHT ALSO LIKE</h2>
+      <a href="{{ url_for('products.catalogue') }}" style="font-family: var(--font-heading); font-weight: 800; font-size: 12px;">SHOP ALL &rarr;</a>
+    </div>
+
+    <div class="product-grid">
+      {% for rel in related_products %}
+      <div class="product-card">
+        <div class="product-card-img-wrap">
+          <a href="{{ url_for('products.product_detail', product_id=rel.id) }}">
+            <img src="{{ rel.image_url }}" alt="{{ rel.name }}">
+          </a>
+        </div>
+        <div class="product-card-body">
+          <span class="product-brand">{{ rel.brand }}</span>
+          <h3 class="product-title"><a href="{{ url_for('products.product_detail', product_id=rel.id) }}">{{ rel.name }}</a></h3>
+          <div class="product-card-price">${{ "%.2f"|format(rel.effective_price) }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedSize = "{{ product.sizes_list[0] if product.sizes_list else '9' }}";
+
+function switchImage(src) {
+  const mainImg = document.getElementById('main-product-img');
+  if (mainImg) mainImg.src = src;
+}
+
+function selectSize(sz, btn) {
+  selectedSize = sz;
+  document.querySelectorAll('.size-btn').forEach(b => {
+    b.style.borderColor = 'var(--border-color-dark)';
+    b.style.background = 'transparent';
+    b.style.color = 'var(--text-primary)';
+  });
+  btn.style.borderColor = 'var(--text-primary)';
+  btn.style.background = 'var(--text-primary)';
+  btn.style.color = '#ffffff';
+}
+
+function handleAddToCart() {
+  addToCart("{{ product.id }}", selectedSize, 1);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const firstBtn = document.querySelector('.size-btn');
+  if (firstBtn) firstBtn.click();
+});
+</script>
+{% endblock %}

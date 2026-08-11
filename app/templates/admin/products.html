@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Products - ShoeStore Admin{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+
+  <!-- Admin Sidebar -->
+  <aside class="admin-sidebar">
+    <div style="font-size: 11px; font-weight: 800; color: var(--accent-lime); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 20px;">ADMINISTRATION</div>
+    <ul class="admin-sidebar-menu">
+      <li><a href="{{ url_for('admin.dashboard') }}" class="admin-sidebar-link">📊 Analytics Overview</a></li>
+      <li><a href="{{ url_for('admin.products_list') }}" class="admin-sidebar-link active">👟 Manage Products</a></li>
+      <li><a href="{{ url_for('admin.orders_list') }}" class="admin-sidebar-link">📦 Manage Orders</a></li>
+      <li><a href="{{ url_for('admin.inventory_list') }}" class="admin-sidebar-link">⚠️ Inventory & Stock</a></li>
+      <li><a href="{{ url_for('admin.users_list') }}" class="admin-sidebar-link">👥 Manage Users</a></li>
+    </ul>
+  </aside>
+
+  <!-- Content -->
+  <main class="admin-content">
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+      <div>
+        <h1 style="font-size: 28px;">Product Management</h1>
+        <p style="color: var(--text-secondary); font-size: 14px; margin-top: 4px;">Add new shoe listings, adjust pricing, upload images, or edit sizes.</p>
+      </div>
+
+      <button class="btn btn-primary" onclick="openAddModal()">+ Add New Product</button>
+    </div>
+
+    <!-- Products Table -->
+    <div style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-lg); overflow: hidden;">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Image</th>
+            <th>Name & Brand</th>
+            <th>Category</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in products %}
+          <tr id="product-row-{{ p.id }}">
+            <td style="width: 70px;">
+              <img src="{{ p.image_url }}" alt="{{ p.name }}" style="width: 48px; height: 48px; object-fit: contain; background: #000; border-radius: 6px;">
+            </td>
+            <td>
+              <div style="font-weight: 700; color: #fff;">{{ p.name }}</div>
+              <div style="font-size: 12px; color: var(--accent-cyan);">{{ p.brand }} ({{ p.color }})</div>
+            </td>
+            <td style="font-size: 13px; color: var(--text-secondary);">{{ p.category.name if p.category else 'N/A' }}</td>
+            <td>
+              <div style="font-weight: 700; color: #fff;">${{ "%.2f"|format(p.effective_price) }}</div>
+              {% if p.discount_price %}
+              <div style="font-size: 11px; color: var(--text-muted); text-decoration: line-through;">${{ "%.2f"|format(p.price) }}</div>
+              {% endif %}
+            </td>
+            <td>
+              <span style="font-weight: 700; color: {{ '#ff4d4d' if p.stock_quantity == 0 else 'var(--accent-lime)' }};">
+                {{ p.stock_quantity }} units
+              </span>
+            </td>
+            <td>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-secondary btn-sm" onclick='openEditModal({{ p.to_dict()|tojson }})'>Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteProduct({{ p.id }})">Delete</button>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+
+</div>
+
+<!-- Modal: Add / Edit Product -->
+<div id="product-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 9999; align-items: center; justify-content: center;">
+  <div style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-lg); width: 100%; max-width: 600px; padding: 32px; max-height: 90vh; overflow-y: auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+      <h2 id="modal-title" style="font-size: 22px;">Add New Shoe Product</h2>
+      <button onclick="closeModal()" style="background: none; border: none; color: #fff; font-size: 20px; cursor: pointer;">✕</button>
+    </div>
+
+    <form id="product-form" onsubmit="submitProductForm(event)">
+      <input type="hidden" id="prod-id" value="">
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div class="form-group">
+          <label class="form-label">Shoe Name *</label>
+          <input type="text" id="prod-name" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Brand *</label>
+          <input type="text" id="prod-brand" class="form-control" placeholder="e.g. AirFlex" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Description *</label>
+        <textarea id="prod-description" class="form-control" rows="3" required></textarea>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+        <div class="form-group">
+          <label class="form-label">Regular Price ($) *</label>
+          <input type="number" step="0.01" id="prod-price" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Discount Price ($)</label>
+          <input type="number" step="0.01" id="prod-discount-price" class="form-control">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Stock Qty *</label>
+          <input type="number" id="prod-stock" class="form-control" required>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div class="form-group">
+          <label class="form-label">Category *</label>
+          <select id="prod-category" class="form-control" required>
+            {% for cat in categories %}
+            <option value="{{ cat.id }}">{{ cat.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Colorway</label>
+          <input type="text" id="prod-color" class="form-control" placeholder="Black/Cyan">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Available Sizes (comma separated)</label>
+        <input type="text" id="prod-sizes" class="form-control" placeholder="7,8,9,10,11">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Image URL / Asset Path</label>
+        <input type="text" id="prod-image-url" class="form-control" placeholder="/static/images/shoe_runner.svg">
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Product</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openAddModal() {
+  document.getElementById('prod-id').value = '';
+  document.getElementById('modal-title').innerText = 'Add New Shoe Product';
+  document.getElementById('product-form').reset();
+  document.getElementById('product-modal').style.display = 'flex';
+}
+
+function openEditModal(prod) {
+  document.getElementById('prod-id').value = prod.id;
+  document.getElementById('modal-title').innerText = 'Edit Shoe Product #' + prod.id;
+  document.getElementById('prod-name').value = prod.name;
+  document.getElementById('prod-brand').value = prod.brand;
+  document.getElementById('prod-description').value = prod.description;
+  document.getElementById('prod-price').value = prod.price;
+  document.getElementById('prod-discount-price').value = prod.discount_price || '';
+  document.getElementById('prod-stock').value = prod.stock_quantity;
+  document.getElementById('prod-category').value = prod.category_id;
+  document.getElementById('prod-color').value = prod.color;
+  document.getElementById('prod-sizes').value = prod.sizes.join(',');
+  document.getElementById('prod-image-url').value = prod.image_url;
+  document.getElementById('product-modal').style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('product-modal').style.display = 'none';
+}
+
+async function submitProductForm(e) {
+  e.preventDefault();
+  const prodId = document.getElementById('prod-id').value;
+  const isEdit = !!prodId;
+
+  const payload = {
+    name: document.getElementById('prod-name').value,
+    brand: document.getElementById('prod-brand').value,
+    description: document.getElementById('prod-description').value,
+    price: parseFloat(document.getElementById('prod-price').value),
+    discount_price: document.getElementById('prod-discount-price').value ? parseFloat(document.getElementById('prod-discount-price').value) : null,
+    stock_quantity: parseInt(document.getElementById('prod-stock').value),
+    category_id: parseInt(document.getElementById('prod-category').value),
+    color: document.getElementById('prod-color').value,
+    available_sizes: document.getElementById('prod-sizes').value,
+    image_url: document.getElementById('prod-image-url').value || '/static/images/placeholder_shoe.svg'
+  };
+
+  const url = isEdit ? `/admin/api/products/${prodId}` : '/admin/api/products';
+  const method = isEdit ? 'PUT' : 'POST';
+
+  try {
+    const res = await fetch(url, {
+      method: method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (res.ok) {
+      showToast(data.message || 'Saved successfully', 'success');
+      closeModal();
+      setTimeout(() => window.location.reload(), 800);
+    } else {
+      showToast(data.error || 'Failed to save product', 'danger');
+    }
+  } catch (err) {
+    showToast('Network error saving product', 'danger');
+  }
+}
+
+async function deleteProduct(id) {
+  if (!confirm('Are you sure you want to delete this product?')) return;
+  try {
+    const res = await fetch(`/admin/api/products/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (res.ok) {
+      showToast('Product deleted', 'info');
+      document.getElementById(`product-row-${id}`).remove();
+    } else {
+      showToast(data.error || 'Delete failed', 'danger');
+    }
+  } catch (err) {
+    showToast('Network error deleting product', 'danger');
+  }
+}
+</script>
+{% endblock %}

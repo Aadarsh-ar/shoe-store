@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Shopping Bag - ShoeStore{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 40px; padding-bottom: 100px;">
+
+  <h1 style="font-size: 34px; margin-bottom: 40px; color: var(--text-primary);">YOUR SHOPPING BAG</h1>
+
+  {% if cart['items'] %}
+  <div style="display: grid; grid-template-columns: 1fr 380px; gap: 60px;">
+
+    <!-- Items List -->
+    <div style="display: flex; flex-direction: column; gap: 24px;">
+      {% for item in cart['items'] %}
+      <div style="background: #ffffff; border: 1px solid var(--border-color); padding: 24px; display: grid; grid-template-columns: 100px 1fr auto; gap: 24px; align-items: center;" id="cart-item-row-{{ item['id'] }}">
+        
+        <!-- Image -->
+        <div style="width: 100px; height: 100px; background: #f5f5f5; padding: 8px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-md);">
+          <img src="{{ item['product']['image_url'] if item['product'] else '/static/images/placeholder_shoe.svg' }}" alt="{{ item['product']['name'] if item['product'] else 'Shoe' }}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+        </div>
+
+        <!-- Details -->
+        <div>
+          <div style="font-size: 12px; font-weight: 600; color: var(--accent-red); margin-bottom: 2px;">{{ item['product']['brand'] if item['product'] else '' }}</div>
+          <h3 style="font-size: 16px; color: var(--text-primary); margin: 2px 0 6px;">{{ item['product']['name'] if item['product'] else 'Product' }}</h3>
+          <div style="font-size: 13px; color: var(--text-secondary); display: flex; gap: 16px;">
+            <span>SIZE: <strong style="color: var(--text-primary);">US {{ item['size'] }}</strong></span>
+            <span>PRICE: <strong>${{ "%.2f"|format(item['product']['effective_price'] if item['product'] else 0.0) }}</strong></span>
+          </div>
+        </div>
+
+        <!-- Actions & Price -->
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 14px;">
+          <div style="font-family: var(--font-body); font-size: 18px; font-weight: 700; color: var(--text-primary);">
+            ${{ "%.2f"|format(item['subtotal']) }}
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="display: flex; align-items: center; border: 1px solid var(--border-color); background: #ffffff; border-radius: var(--radius-full);">
+              <button onclick="updateCartItemQty('{{ item['id'] }}', {{ item['quantity'] - 1 }})" style="background: none; border: none; color: var(--text-primary); padding: 6px 12px; cursor: pointer; font-weight: bold;">-</button>
+              <span style="padding: 0 10px; font-family: var(--font-body); font-weight: 700; font-size: 13px;">{{ item['quantity'] }}</span>
+              <button onclick="updateCartItemQty('{{ item['id'] }}', {{ item['quantity'] + 1 }})" style="background: none; border: none; color: var(--text-primary); padding: 6px 12px; cursor: pointer; font-weight: bold;">+</button>
+            </div>
+
+            <button onclick="removeCartItem('{{ item['id'] }}')" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 18px;" title="Remove">✕</button>
+          </div>
+        </div>
+
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Order Summary Column -->
+    <div>
+      <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 32px; box-shadow: var(--shadow-sm);">
+        <h3 style="font-size: 18px; margin-bottom: 24px; border-bottom: 1px solid var(--border-color); padding-bottom: 16px; color: var(--text-primary);">SUMMARY</h3>
+
+        <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 14px; color: var(--text-secondary);">
+          <span>SUBTOTAL</span>
+          <span style="color: var(--text-primary); font-weight: 700;">${{ "%.2f"|format(cart['subtotal']) }}</span>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 14px; color: var(--text-secondary);">
+          <span>ESTIMATED SHIPPING</span>
+          {% if cart['shipping_fee'] == 0.0 %}
+          <span style="color: var(--text-primary); font-weight: 700;">FREE</span>
+          {% else %}
+          <span style="color: var(--text-primary); font-weight: 700;">${{ "%.2f"|format(cart['shipping_fee']) }}</span>
+          {% endif %}
+        </div>
+
+        {% if cart['subtotal'] < 100.0 %}
+        <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 20px; background: #f5f5f5; padding: 12px 14px; border-radius: var(--radius-md);">
+          Add ${{ "%.2f"|format(100.0 - cart['subtotal']) }} more to unlock FREE Delivery.
+        </div>
+        {% endif %}
+
+        <div style="display: flex; justify-content: space-between; font-size: 22px; font-weight: 800; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-color); color: var(--text-primary);">
+          <span>TOTAL</span>
+          <span>${{ "%.2f"|format(cart['total']) }}</span>
+        </div>
+
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('orders.checkout') }}" class="btn btn-primary btn-lg btn-block" style="margin-top: 32px;">
+          CHECKOUT &rarr;
+        </a>
+        {% else %}
+        <a href="{{ url_for('auth.login', next=url_for('orders.checkout')) }}" class="btn btn-primary btn-lg btn-block" style="margin-top: 32px;">
+          SIGN IN TO CHECKOUT
+        </a>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+  {% else %}
+  <div style="text-align: center; padding: 120px 20px; background: #f5f5f5; border-radius: var(--radius-lg);">
+    <h2 style="font-size: 24px; margin-bottom: 16px; color: var(--text-primary);">YOUR SHOPPING BAG IS EMPTY</h2>
+    <p style="color: var(--text-secondary); margin-bottom: 32px;">Explore our catalog to find your next pair of kicks.</p>
+    <a href="{{ url_for('products.catalogue') }}" class="btn btn-primary btn-lg">BROWSE FOOTWEAR NOW</a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function updateCartItemQty(itemId, newQty) {
+  try {
+    const res = await fetch(`/api/cart/${itemId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ quantity: parseInt(newQty) })
+    });
+    if (res.ok) window.location.reload();
+  } catch (err) {
+    showToast('Error updating bag', 'danger');
+  }
+}
+
+async function removeCartItem(itemId) {
+  try {
+    const res = await fetch(`/api/cart/${itemId}`, { method: 'DELETE' });
+    if (res.ok) window.location.reload();
+  } catch (err) {
+    showToast('Error removing item', 'danger');
+  }
+}
+</script>
+{% endblock %}

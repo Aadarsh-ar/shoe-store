@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}500 Internal Server Error - ShoeStore{% endblock %}
+
+{% block content %}
+<div class="container" style="text-align: center; padding: 100px 20px;">
+  <div style="font-size: 80px; font-weight: 900; font-family: var(--font-heading); color: var(--accent-orange); line-height: 1;">500</div>
+  <h1 style="font-size: 28px; margin: 16px 0;">Internal Server Exception</h1>
+  <p style="color: var(--text-secondary); max-width: 460px; margin: 0 auto 30px;">
+    An unexpected server error occurred. Our engineers have been alerted. Please try again in a few moments.
+  </p>
+  <a href="{{ url_for('main.index') }}" class="btn btn-primary btn-lg">Return to Homepage</a>
+</div>
+{% endblock %}

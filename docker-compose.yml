@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: shoestore_web
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - SECRET_KEY=production-super-secret-key-shoestore-2026
+      - DATABASE_URL=postgresql://shoestore_user:shoestore_pass@db:5432/shoestore_db
+    depends_on:
+      - db
+    command: >
+      sh -c "python seed.py && gunicorn --bind 0.0.0.0:5000 --workers 4 run:app"
+
+  db:
+    image: postgres:15-alpine
+    container_name: shoestore_db
+    restart: always
+    environment:
+      POSTGRES_USER: shoestore_user
+      POSTGRES_PASSWORD: shoestore_pass
+      POSTGRES_DB: shoestore_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

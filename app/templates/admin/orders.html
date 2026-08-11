@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Orders - ShoeStore Admin{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+
+  <!-- Admin Sidebar -->
+  <aside class="admin-sidebar">
+    <div style="font-size: 11px; font-weight: 800; color: var(--accent-lime); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 20px;">ADMINISTRATION</div>
+    <ul class="admin-sidebar-menu">
+      <li><a href="{{ url_for('admin.dashboard') }}" class="admin-sidebar-link">📊 Analytics Overview</a></li>
+      <li><a href="{{ url_for('admin.products_list') }}" class="admin-sidebar-link">👟 Manage Products</a></li>
+      <li><a href="{{ url_for('admin.orders_list') }}" class="admin-sidebar-link active">📦 Manage Orders</a></li>
+      <li><a href="{{ url_for('admin.inventory_list') }}" class="admin-sidebar-link">⚠️ Inventory & Stock</a></li>
+      <li><a href="{{ url_for('admin.users_list') }}" class="admin-sidebar-link">👥 Manage Users</a></li>
+    </ul>
+  </aside>
+
+  <!-- Content -->
+  <main class="admin-content">
+
+    <div style="margin-bottom: 30px;">
+      <h1 style="font-size: 28px;">Customer Orders Fulfillment</h1>
+      <p style="color: var(--text-secondary); font-size: 14px; margin-top: 4px;">Update order status (Confirmed, Processing, Shipped, Delivered, Cancelled).</p>
+    </div>
+
+    <div style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-lg); overflow: hidden;">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Order #</th>
+            <th>Date</th>
+            <th>Customer Info</th>
+            <th>Shipping Address</th>
+            <th>Total Amount</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ord in orders %}
+          <tr>
+            <td><strong style="color: var(--accent-cyan);">#{{ ord.order_number }}</strong></td>
+            <td style="font-size: 13px; color: var(--text-secondary);">{{ ord.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td>
+              <div style="font-weight: 700; color: #fff;">{{ ord.full_name }}</div>
+              <div style="font-size: 12px; color: var(--text-secondary);">{{ ord.email }} • {{ ord.phone }}</div>
+            </td>
+            <td style="font-size: 13px; color: var(--text-secondary); max-width: 200px;">
+              {{ ord.shipping_address }}, {{ ord.city }}
+            </td>
+            <td><strong style="color: var(--accent-lime); font-size: 16px;">${{ "%.2f"|format(ord.total_amount) }}</strong></td>
+            <td>
+              <select class="form-control" style="width: auto; padding: 6px 12px; font-size: 13px;" onchange="updateOrderStatus({{ ord.id }}, this.value)">
+                {% for st in ['Pending', 'Confirmed', 'Processing', 'Shipped', 'Delivered', 'Cancelled'] %}
+                <option value="{{ st }}" {% if ord.status == st %}selected{% endif %}>{{ st }}</option>
+                {% endfor %}
+              </select>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function updateOrderStatus(orderId, newStatus) {
+  try {
+    const res = await fetch(`/admin/api/orders/${orderId}/status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      showToast(data.message || 'Status updated', 'success');
+    } else {
+      showToast(data.error || 'Failed to update status', 'danger');
+    }
+  } catch (err) {
+    showToast('Network error updating order status', 'danger');
+  }
+}
+</script>
+{% endblock %}

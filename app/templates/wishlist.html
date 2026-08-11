@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Saved Wishlist - ShoeStore{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 40px; padding-bottom: 100px;">
+
+  <h1 style="font-size: 34px; margin-bottom: 40px; color: var(--text-primary);">SAVED WISHLIST</h1>
+
+  {% if wishlist_items %}
+  <div class="product-grid">
+    {% for item in wishlist_items %}
+    {% set product = item.product %}
+    <div class="product-card" id="wishlist-card-{{ item.id }}">
+      <div class="product-card-img-wrap">
+        <button class="wishlist-toggle-btn active" onclick="removeWishlistItem('{{ item.id }}')" title="Remove from Wishlist">
+          ✕
+        </button>
+
+        <a href="{{ url_for('products.product_detail', product_id=product.id) }}">
+          <img src="{{ product.image_url }}" alt="{{ product.name }}">
+        </a>
+      </div>
+
+      <div class="product-card-body">
+        <span class="product-brand">{{ product.brand }}</span>
+        <h3 class="product-title"><a href="{{ url_for('products.product_detail', product_id=product.id) }}">{{ product.name }}</a></h3>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+          <span class="product-card-price">${{ "%.2f"|format(product.effective_price) }}</span>
+          <span style="font-size: 12px; color: var(--text-muted);">SIZE {{ product.sizes_list[0] if product.sizes_list else '9' }}</span>
+        </div>
+
+        <button class="btn btn-primary btn-sm btn-block" style="margin-top: 14px;" onclick="moveWishlistToCart('{{ item.id }}', '{{ product.sizes_list[0] if product.sizes_list else '9' }}')">
+          MOVE TO BAG
+        </button>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="text-align: center; padding: 100px 20px; background: #fafafa; border: 1px solid var(--border-color);">
+    <h2 style="font-size: 24px; margin-bottom: 12px; color: var(--text-primary);">YOUR WISHLIST IS EMPTY</h2>
+    <p style="color: var(--text-secondary); margin-bottom: 24px;">Save items to your wishlist while browsing our catalog.</p>
+    <a href="{{ url_for('products.catalogue') }}" class="btn btn-primary">BROWSE FOOTWEAR</a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function removeWishlistItem(itemId) {
+  try {
+    const res = await fetch(`/api/wishlist/${itemId}`, { method: 'DELETE' });
+    if (res.ok) {
+      showToast('Item removed', 'info');
+      const card = document.getElementById(`wishlist-card-${itemId}`);
+      if (card) card.remove();
+    }
+  } catch (err) {
+    showToast('Network error', 'danger');
+  }
+}
+
+async function moveWishlistToCart(itemId, size) {
+  try {
+    const res = await fetch(`/api/wishlist/${itemId}/move-to-cart`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ size: size })
+    });
+    if (res.ok) {
+      showToast('Moved to bag', 'success');
+      setTimeout(() => window.location.reload(), 600);
+    }
+  } catch (err) {
+    showToast('Network error', 'danger');
+  }
+}
+</script>
+{% endblock %}

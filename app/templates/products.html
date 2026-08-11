@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}{{ catalog_title }} - ShoeStore Footwear{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 40px; padding-bottom: 80px;">
+
+  <!-- Breadcrumb -->
+  <div style="font-family: var(--font-heading); font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: var(--text-muted); text-transform: uppercase; margin-bottom: 16px;">
+    <a href="{{ url_for('main.index') }}">HOME</a> / <a href="{{ url_for('products.catalogue') }}">FOOTWEAR</a> / <span style="color: #fff;">{{ catalog_title }}</span>
+  </div>
+
+  <!-- Header bar -->
+  <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; flex-wrap: wrap; gap: 20px;">
+    <div>
+      <h1 style="font-size: 38px; line-height: 1;">{{ catalog_title }}</h1>
+      <p style="color: var(--text-secondary); font-size: 13px; margin-top: 6px;">
+        Showing {{ pagination.total }} style(s) available
+      </p>
+    </div>
+
+    <!-- Filter Drawer Toggle & Sort Dropdown -->
+    <div style="display: flex; align-items: center; gap: 16px;">
+      <form method="GET" action="{{ url_for('products.catalogue') }}" style="display: flex; align-items: center; gap: 10px;" id="sort-form">
+        {% if current_filters.category %}<input type="hidden" name="category" value="{{ current_filters.category }}">{% endif %}
+        {% if current_filters.gender %}<input type="hidden" name="gender" value="{{ current_filters.gender }}">{% endif %}
+        {% if current_filters.brand %}<input type="hidden" name="brand" value="{{ current_filters.brand }}">{% endif %}
+        {% if current_filters.size %}<input type="hidden" name="size" value="{{ current_filters.size }}">{% endif %}
+        {% if current_filters.min_price %}<input type="hidden" name="min_price" value="{{ current_filters.min_price }}">{% endif %}
+        {% if current_filters.max_price %}<input type="hidden" name="max_price" value="{{ current_filters.max_price }}">{% endif %}
+        {% if current_filters.q %}<input type="hidden" name="q" value="{{ current_filters.q }}">{% endif %}
+
+        <label for="sort-select" style="font-family: var(--font-heading); font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: var(--text-secondary); white-space: nowrap;">SORT BY:</label>
+        <select id="sort-select" name="sort" class="form-control" style="width: auto; padding: 8px 14px; font-family: var(--font-heading); font-size: 12px; font-weight: 700; text-transform: uppercase;" onchange="this.form.submit()">
+          <option value="newest" {% if current_filters.sort == 'newest' %}selected{% endif %}>NEWEST ARRIVALS</option>
+          <option value="price_low" {% if current_filters.sort == 'price_low' %}selected{% endif %}>PRICE: LOW TO HIGH</option>
+          <option value="price_high" {% if current_filters.sort == 'price_high' %}selected{% endif %}>PRICE: HIGH TO LOW</option>
+          <option value="rating" {% if current_filters.sort == 'rating' %}selected{% endif %}>HIGHEST RATED</option>
+        </select>
+      </form>
+    </div>
+  </div>
+
+  <!-- Layout: Sidebar Filters + Grid -->
+  <div style="display: grid; grid-template-columns: 240px 1fr; gap: 40px;">
+
+    <!-- Sidebar Filters -->
+    <aside>
+      <div class="filter-drawer">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+          <h3 style="font-size: 16px;">FILTERS</h3>
+          <a href="{{ url_for('products.catalogue') }}" style="font-family: var(--font-heading); font-size: 11px; font-weight: 700; color: var(--text-secondary);">CLEAR ALL</a>
+        </div>
+
+        <form method="GET" action="{{ url_for('products.catalogue') }}">
+          {% if current_filters.q %}<input type="hidden" name="q" value="{{ current_filters.q }}">{% endif %}
+          {% if current_filters.sort %}<input type="hidden" name="sort" value="{{ current_filters.sort }}">{% endif %}
+
+          <!-- Gender Filter -->
+          <div style="margin-bottom: 28px;">
+            <h4 style="font-size: 12px; color: var(--text-muted); letter-spacing: 0.1em; margin-bottom: 12px;">GENDER</h4>
+            <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px;">
+              {% for g in ['Men', 'Women', 'Kids'] %}
+              <label style="cursor: pointer; display: flex; align-items: center; gap: 8px; color: {{ '#fff' if current_filters.gender == g else 'var(--text-secondary)' }};">
+                <input type="radio" name="gender" value="{{ g }}" onchange="this.form.submit()" {% if current_filters.gender == g %}checked{% endif %}> {{ g }}
+              </label>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Category Filter -->
+          <div style="margin-bottom: 28px;">
+            <h4 style="font-size: 12px; color: var(--text-muted); letter-spacing: 0.1em; margin-bottom: 12px;">CATEGORY</h4>
+            <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px;">
+              <label style="cursor: pointer; display: flex; align-items: center; gap: 8px; color: {{ '#fff' if not current_filters.category else 'var(--text-secondary)' }};">
+                <input type="radio" name="category" value="" onchange="this.form.submit()" {% if not current_filters.category %}checked{% endif %}> All Categories
+              </label>
+              {% for cat in categories %}
+              <label style="cursor: pointer; display: flex; align-items: center; gap: 8px; color: {{ '#fff' if current_filters.category == cat.slug else 'var(--text-secondary)' }};">
+                <input type="radio" name="category" value="{{ cat.slug }}" onchange="this.form.submit()" {% if current_filters.category == cat.slug %}checked{% endif %}> {{ cat.name }}
+              </label>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Brand Filter -->
+          <div style="margin-bottom: 28px;">
+            <h4 style="font-size: 12px; color: var(--text-muted); letter-spacing: 0.1em; margin-bottom: 12px;">BRAND</h4>
+            <select name="brand" class="form-control" style="font-size: 12px;" onchange="this.form.submit()">
+              <option value="">All Brands</option>
+              {% for b in brands %}
+              <option value="{{ b }}" {% if current_filters.brand == b %}selected{% endif %}>{{ b }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Size Filter -->
+          <div style="margin-bottom: 28px;">
+            <h4 style="font-size: 12px; color: var(--text-muted); letter-spacing: 0.1em; margin-bottom: 12px;">SHOE SIZE</h4>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
+              {% for sz in ['7', '8', '9', '10', '11', '12'] %}
+              <button type="submit" name="size" value="{{ sz if current_filters.size != sz else '' }}" class="btn btn-secondary btn-sm" style="padding: 8px 0; {{ 'background:#fff; color:#000; border-color:#fff;' if current_filters.size == sz else '' }}">
+                {{ sz }}
+              </button>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Price Filter -->
+          <div style="margin-bottom: 24px;">
+            <h4 style="font-size: 12px; color: var(--text-muted); letter-spacing: 0.1em; margin-bottom: 12px;">MAX PRICE ($)</h4>
+            <input type="number" name="max_price" placeholder="e.g. 150" value="{{ current_filters.max_price or '' }}" class="form-control" style="margin-bottom: 12px;">
+            <button type="submit" class="btn btn-primary btn-sm btn-block">APPLY</button>
+          </div>
+        </form>
+      </div>
+    </aside>
+
+    <!-- Product Grid -->
+    <div>
+      {% if products %}
+      <div class="product-grid">
+        {% for product in products %}
+        <div class="product-card">
+          <div class="product-card-img-wrap">
+            {% if product.discount_price %}
+            <span class="badge-tag badge-sale">SALE</span>
+            {% elif product.is_new_release %}
+            <span class="badge-tag">NEW</span>
+            {% endif %}
+
+            {% if current_user.is_authenticated %}
+            <button class="wishlist-toggle-btn" onclick="toggleWishlist('{{ product.id }}', this)" title="Add to Wishlist">
+              ♥
+            </button>
+            {% endif %}
+
+            <a href="{{ url_for('products.product_detail', product_id=product.id) }}">
+              <img src="{{ product.image_url }}" alt="{{ product.name }}">
+            </a>
+          </div>
+
+          <div class="product-card-body">
+            <span class="product-brand">{{ product.brand }} • {{ product.gender }}</span>
+            <h3 class="product-title">
+              <a href="{{ url_for('products.product_detail', product_id=product.id) }}">{{ product.name }}</a>
+            </h3>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+              <div class="product-card-price">${{ "%.2f"|format(product.effective_price) }}</div>
+              
+              {% if product.stock_quantity > 0 %}
+              <button class="btn btn-primary btn-sm" onclick="addToCart('{{ product.id }}', '{{ product.sizes_list[0] if product.sizes_list else '9' }}', 1)">
+                + ADD
+              </button>
+              {% else %}
+              <span style="color: var(--accent-red); font-size: 11px; font-weight: 700;">OUT OF STOCK</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Pagination -->
+      {% if pagination.pages > 1 %}
+      <div style="display: flex; justify-content: center; gap: 8px; margin-top: 60px;">
+        {% if pagination.has_prev %}
+        <a href="{{ url_for('products.catalogue', page=pagination.prev_num, category=current_filters.category, gender=current_filters.gender, brand=current_filters.brand, size=current_filters.size, min_price=current_filters.min_price, max_price=current_filters.max_price, q=current_filters.q, sort=current_filters.sort, collection=current_filters.collection) }}" class="btn btn-secondary btn-sm">&larr; PREV</a>
+        {% endif %}
+
+        {% for p in pagination.iter_pages() %}
+          {% if p %}
+            <a href="{{ url_for('products.catalogue', page=p, category=current_filters.category, gender=current_filters.gender, brand=current_filters.brand, size=current_filters.size, min_price=current_filters.min_price, max_price=current_filters.max_price, q=current_filters.q, sort=current_filters.sort, collection=current_filters.collection) }}" class="btn btn-sm {{ 'btn-primary' if p == pagination.page else 'btn-secondary' }}">{{ p }}</a>
+          {% else %}
+            <span style="padding: 6px 12px; color: var(--text-muted);">...</span>
+          {% endif %}
+        {% endfor %}
+
+        {% if pagination.has_next %}
+        <a href="{{ url_for('products.catalogue', page=pagination.next_num, category=current_filters.category, gender=current_filters.gender, brand=current_filters.brand, size=current_filters.size, min_price=current_filters.min_price, max_price=current_filters.max_price, q=current_filters.q, sort=current_filters.sort, collection=current_filters.collection) }}" class="btn btn-secondary btn-sm">NEXT &rarr;</a>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% else %}
+      <div style="text-align: center; padding: 100px 20px; background: #0a0a0a; border: 1px solid var(--border-color);">
+        <h2 style="font-size: 22px; margin-bottom: 12px;">NO STYLES FOUND MATCHING FILTERS</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 24px;">Try clearing filters or adjusting your size selection.</p>
+        <a href="{{ url_for('products.catalogue') }}" class="btn btn-primary">RESET ALL FILTERS</a>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% endblock %}

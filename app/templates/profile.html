@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile - ShoeStore{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 580px; padding-top: 50px; padding-bottom: 100px;">
+
+  <h1 style="font-size: 32px; margin-bottom: 30px; color: var(--text-primary);">MY ACCOUNT PROFILE</h1>
+
+  <div style="background: #fafafa; border: 1px solid var(--border-color); padding: 36px;">
+    
+    <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 28px; padding-bottom: 24px; border-bottom: 1px solid var(--border-color);">
+      <div style="width: 60px; height: 60px; background: var(--text-primary); color: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; font-family: var(--font-heading);">
+        {{ current_user.full_name[0] }}
+      </div>
+      <div>
+        <h2 style="font-size: 20px; color: var(--text-primary);">{{ current_user.full_name }}</h2>
+        <p style="color: var(--text-secondary); font-size: 13px;">{{ current_user.email }} • <span style="text-transform: uppercase; font-weight:700; color: var(--text-primary);">{{ current_user.role }}</span></p>
+      </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('auth.profile') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="form-group">
+        <label class="form-label">FULL NAME</label>
+        <input type="text" name="full_name" class="form-control" value="{{ current_user.full_name }}" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">EMAIL ADDRESS (READ ONLY)</label>
+        <input type="email" class="form-control" value="{{ current_user.email }}" disabled style="opacity: 0.6;">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">NEW PASSWORD (LEAVE BLANK TO KEEP CURRENT)</label>
+        <input type="password" name="new_password" class="form-control" placeholder="••••••••" minlength="6">
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg" style="margin-top: 10px;">SAVE PROFILE CHANGES</button>
+    </form>
+
+  </div>
+
+</div>
+{% endblock %}

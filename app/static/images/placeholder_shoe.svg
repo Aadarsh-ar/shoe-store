@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250" width="100%" height="100%">
+  <path d="M 50,160 C 70,135 100,105 150,90 C 190,80 240,60 290,90 C 330,110 360,135 360,170 C 320,180 260,180 200,180 C 140,180 80,180 50,160 Z" fill="#00F0FF" opacity="0.8"/>
+  <path d="M 40,170 C 80,170 140,180 200,180 C 260,180 320,170 370,170 C 378,185 355,200 315,200 C 235,204 115,204 45,195 C 32,187 31,174 40,170 Z" fill="#FFFFFF"/>
+  <text x="200" y="235" font-family="sans-serif" font-size="14" fill="#9DA8B9" text-anchor="middle">ShoeStore Authentic Footwear</text>
+</svg>

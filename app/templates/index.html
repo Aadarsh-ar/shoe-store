@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}ShoeStore - Premium Athletic & High-End Footwear{% endblock %}
+
+{% block content %}
+
+<!-- 1. FULL-WIDTH CINEMATIC HERO (LIGHT THEME) -->
+<section class="hero-editorial">
+  <div class="hero-bg-visual">
+    <img src="/static/images/hero_shoe.svg" alt="Cinematic Footwear Visual">
+  </div>
+
+  <div class="container" style="position: relative; z-index: 10;">
+    <div class="hero-content">
+      <div class="hero-tag">NEW SEASON // 2026 PERFORMANCE</div>
+      <h1 class="hero-headline">BREAK THROUGH YOUR LIMITS</h1>
+      <p class="hero-subtext">
+        Engineered with carbon-plated energy return, ultra-light cushioning, and high-fashion streetwear aesthetics.
+      </p>
+      <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+        <a href="{{ url_for('products.catalogue') }}" class="btn btn-primary btn-lg">SHOP NOW</a>
+        <a href="{{ url_for('products.catalogue', collection='new-releases') }}" class="btn btn-secondary btn-lg">EXPLORE COLLECTIONS</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. FEATURED PRODUCTS GRID -->
+<section style="padding: 100px 0 60px;">
+  <div class="container">
+    <div class="section-header">
+      <div>
+        <div style="font-family: var(--font-heading); font-size: 11px; font-weight: 800; color: var(--text-muted); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 6px;">EDITORIAL DROPS</div>
+        <h2 class="section-title">FEATURED FOOTWEAR</h2>
+      </div>
+      <a href="{{ url_for('products.catalogue') }}" style="font-family: var(--font-heading); font-weight: 800; font-size: 12px; letter-spacing: 0.1em; color: var(--text-primary);">VIEW ALL PRODUCTS &rarr;</a>
+    </div>
+
+    <div class="product-grid">
+      {% for product in featured_products %}
+      <div class="product-card">
+        <div class="product-card-img-wrap">
+          {% if product.discount_price %}
+          <span class="badge-tag badge-sale">SALE</span>
+          {% elif product.is_new_release %}
+          <span class="badge-tag">NEW</span>
+          {% endif %}
+
+          {% if current_user.is_authenticated %}
+          <button class="wishlist-toggle-btn" onclick="toggleWishlist('{{ product.id }}', this)" title="Save to Wishlist">
+            ♥
+          </button>
+          {% endif %}
+
+          <a href="{{ url_for('products.product_detail', product_id=product.id) }}">
+            <img src="{{ product.image_url }}" alt="{{ product.name }}">
+          </a>
+        </div>
+
+        <div class="product-card-body">
+          <span class="product-brand">{{ product.brand }} • {{ product.gender }}</span>
+          <h3 class="product-title">
+            <a href="{{ url_for('products.product_detail', product_id=product.id) }}">{{ product.name }}</a>
+          </h3>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+            <div class="product-card-price">${{ "%.2f"|format(product.effective_price) }}</div>
+            <button class="btn btn-primary btn-sm" onclick="addToCart('{{ product.id }}', '{{ product.sizes_list[0] if product.sizes_list else '9' }}', 1)">
+              + QUICK ADD
+            </button>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- 3. NEW RELEASES HORIZONTAL CAROUSEL -->
+<section style="padding: 80px 0; background: #fafafa; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">
+  <div class="container">
+    <div class="section-header">
+      <div>
+        <div style="font-family: var(--font-heading); font-size: 11px; font-weight: 800; color: var(--text-muted); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 6px;">LATEST ARRIVALS</div>
+        <h2 class="section-title">NEW RELEASES</h2>
+      </div>
+
+      <div style="display: flex; gap: 10px;">
+        <button class="btn btn-secondary btn-sm" onclick="scrollCarousel('new-releases-carousel', -1)" aria-label="Previous">&larr;</button>
+        <button class="btn btn-secondary btn-sm" onclick="scrollCarousel('new-releases-carousel', 1)" aria-label="Next">&rarr;</button>
+      </div>
+    </div>
+
+    <div class="carousel-container" id="new-releases-carousel">
+      {% for product in new_arrivals %}
+      <div class="carousel-item">
+        <div class="product-card">
+          <div class="product-card-img-wrap">
+            <span class="badge-tag">RELEASE</span>
+            <a href="{{ url_for('products.product_detail', product_id=product.id) }}">
+              <img src="{{ product.image_url }}" alt="{{ product.name }}">
+            </a>
+          </div>
+          <div class="product-card-body">
+            <span class="product-brand">{{ product.brand }}</span>
+            <h3 class="product-title"><a href="{{ url_for('products.product_detail', product_id=product.id) }}">{{ product.name }}</a></h3>
+            <div class="product-card-price" style="margin-top:4px;">${{ "%.2f"|format(product.effective_price) }}</div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- 4. FULL-WIDTH COLLECTION BANNER (HIGH CONTRAST OBSIDIAN) -->
+<section style="position: relative; width: 100%; height: 55vh; min-height: 420px; background: #09090b; color: #ffffff; overflow: hidden; display: flex; align-items: center;">
+  <img src="/static/images/promo_shoe.svg" alt="Collection Visual" style="position: absolute; right: 5%; width: 50%; max-width: 580px; filter: drop-shadow(0 20px 40px rgba(255,255,255,0.15));">
+
+  <div class="container" style="position: relative; z-index: 10;">
+    <div style="max-width: 560px;">
+      <span style="font-family: var(--font-heading); font-size: 12px; font-weight: 800; letter-spacing: 0.15em; color: #a1a1aa; text-transform: uppercase;">LIMITED EDITION</span>
+      <h2 style="font-size: clamp(36px, 5vw, 58px); font-weight: 900; line-height: 1; margin: 12px 0 20px; color: #ffffff;">HYPER DUNK PRO CAPSULE</h2>
+      <p style="color: #a1a1aa; font-size: 15px; margin-bottom: 30px; line-height: 1.6;">
+        Designed for explosive vertical leap, multidirectional traction, and relentless court domination.
+      </p>
+      <a href="{{ url_for('products.catalogue', category='basketball') }}" class="btn btn-primary btn-lg" style="background:#ffffff; color:#000000;">SHOP THE CAPSULE</a>
+    </div>
+  </div>
+</section>
+
+<!-- 5. SHOP BY CATEGORY & GENDER -->
+<section style="padding: 100px 0;">
+  <div class="container">
+    <div class="section-header">
+      <div>
+        <div style="font-family: var(--font-heading); font-size: 11px; font-weight: 800; color: var(--text-muted); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 6px;">CURATED STYLES</div>
+        <h2 class="section-title">SHOP BY CATEGORY</h2>
+      </div>
+    </div>
+
+    <div class="category-editorial-grid">
+      
+      <a href="{{ url_for('products.catalogue', gender='Men') }}" class="category-editorial-card">
+        <img src="/static/images/hero_shoe.svg" alt="Men's Shoes">
+        <div class="category-editorial-content">
+          <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: var(--text-secondary);">COLLECTION</div>
+          <h3 class="category-editorial-title">MEN'S FOOTWEAR</h3>
+          <span class="btn btn-primary btn-sm">EXPLORE &rarr;</span>
+        </div>
+      </a>
+
+      <a href="{{ url_for('products.catalogue', gender='Women') }}" class="category-editorial-card">
+        <img src="/static/images/promo_shoe.svg" alt="Women's Shoes">
+        <div class="category-editorial-content">
+          <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: var(--text-secondary);">COLLECTION</div>
+          <h3 class="category-editorial-title">WOMEN'S FOOTWEAR</h3>
+          <span class="btn btn-primary btn-sm">EXPLORE &rarr;</span>
+        </div>
+      </a>
+
+      <a href="{{ url_for('products.catalogue', category='running') }}" class="category-editorial-card">
+        <img src="/static/images/hero_shoe.svg" alt="Running Shoes">
+        <div class="category-editorial-content">
+          <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: var(--text-secondary);">PERFORMANCE</div>
+          <h3 class="category-editorial-title">RUNNING LAB</h3>
+          <span class="btn btn-primary btn-sm">EXPLORE &rarr;</span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+</section>
+
+<!-- 7. BRAND STORY -->
+<section class="brand-story-section">
+  <div class="container">
+    <div style="font-family: var(--font-heading); font-size: 12px; font-weight: 800; letter-spacing: 0.2em; color: var(--text-muted); margin-bottom: 16px;">THE SHOESTORE MANIFESTO</div>
+    <p class="brand-story-statement">
+      "WE BELIEVE THAT ATHLETIC PERFORMANCE AND HIGH-END FASHION ARE NOT SEPARATE ROADS. THEY ARE THE EXACT SAME PATH."
+    </p>
+    <a href="{{ url_for('products.catalogue') }}" class="btn btn-secondary">OUR ATHLETIC HERITAGE</a>
+  </div>
+</section>
+
+{% endblock %}

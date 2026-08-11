@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}404 Page Not Found - ShoeStore{% endblock %}
+
+{% block content %}
+<div class="container" style="text-align: center; padding: 100px 20px;">
+  <div style="font-size: 80px; font-weight: 900; font-family: var(--font-heading); color: var(--accent-cyan); line-height: 1;">404</div>
+  <h1 style="font-size: 28px; margin: 16px 0;">Out of Bounds - Page Not Found</h1>
+  <p style="color: var(--text-secondary); max-width: 460px; margin: 0 auto 30px;">
+    The shoe product, page, or resource you are looking for has been moved or doesn't exist.
+  </p>
+  <a href="{{ url_for('main.index') }}" class="btn btn-primary btn-lg">Return to Homepage</a>
+</div>
+{% endblock %}

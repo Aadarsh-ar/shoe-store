@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Order History - ShoeStore{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 40px; padding-bottom: 100px;">
+
+  <h1 style="font-size: 34px; margin-bottom: 30px; color: var(--text-primary);">MY ORDERS & HISTORY</h1>
+
+  {% if single_order %}
+  <!-- Single Order Receipt Breakdown Card -->
+  <div style="background: #fafafa; border: 1px solid var(--border-color); padding: 32px; margin-bottom: 40px;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; margin-bottom: 24px;">
+      <div>
+        <span style="font-family: var(--font-heading); font-size: 11px; color: var(--text-muted); font-weight: 800; letter-spacing: 0.1em;">ORDER RECEIPT</span>
+        <h2 style="font-size: 26px; margin: 4px 0; color: var(--text-primary);">ORDER #{{ single_order.order_number }}</h2>
+        <span style="font-size: 13px; color: var(--text-secondary);">Placed on {{ single_order.created_at.strftime('%B %d, %Y at %I:%M %p') }}</span>
+      </div>
+
+      <div>
+        {% set st_class = 'status-' ~ single_order.status.lower() %}
+        <span class="badge-status {{ st_class }}" style="font-size: 12px; padding: 6px 16px;">
+          STATUS: {{ single_order.status.upper() }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Items Grid -->
+    <h3 style="font-size: 16px; margin-bottom: 16px; color: var(--text-primary);">PURCHASED ITEMS</h3>
+    <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 28px;">
+      {% for item in single_order.items %}
+      <div style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; padding: 16px; border: 1px solid var(--border-color);">
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <img src="{{ item.product_image or '/static/images/placeholder_shoe.svg' }}" alt="{{ item.product_name }}" style="width: 54px; height: 54px; object-fit: contain; background: #f4f4f5;">
+          <div>
+            <div style="font-family: var(--font-heading); font-weight: 800; font-size: 15px; color: var(--text-primary);">{{ item.product_name }}</div>
+            <div style="font-size: 13px; color: var(--text-secondary);">Size: {{ item.size }} • Qty: {{ item.quantity }} • ${{ "%.2f"|format(item.price) }} ea</div>
+          </div>
+        </div>
+        <div style="font-size: 18px; font-weight: 800; font-family: var(--font-heading); color: var(--text-primary);">
+          ${{ "%.2f"|format(item.item_total) }}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Shipping & Payment Breakdown -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; border-top: 1px solid var(--border-color); padding-top: 24px;">
+      <div>
+        <h4 style="font-size: 12px; font-family: var(--font-heading); color: var(--text-muted); letter-spacing: 0.08em; margin-bottom: 8px;">SHIPPING ADDRESS</h4>
+        <p style="color: var(--text-primary); font-size: 14px; line-height: 1.5;">
+          <strong>{{ single_order.full_name }}</strong><br>
+          {{ single_order.shipping_address }}<br>
+          {{ single_order.city }}, {{ single_order.postal_code }} ({{ single_order.country }})<br>
+          Phone: {{ single_order.phone }}
+        </p>
+      </div>
+
+      <div style="text-align: right;">
+        <h4 style="font-size: 12px; font-family: var(--font-heading); color: var(--text-muted); letter-spacing: 0.08em; margin-bottom: 8px;">PAYMENT DETAILS</h4>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Method: <strong style="color: var(--text-primary);">{{ single_order.payment_method }}</strong></p>
+        
+        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 6px;">Subtotal: ${{ "%.2f"|format(single_order.subtotal) }}</div>
+        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 10px;">Shipping: ${{ "%.2f"|format(single_order.shipping_fee) }}</div>
+        <div style="font-size: 22px; font-weight: 900; color: var(--text-primary); font-family: var(--font-heading);">
+          Total Paid: ${{ "%.2f"|format(single_order.total_amount) }}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Order List -->
+  {% if orders %}
+  <div style="background: #ffffff; border: 1px solid var(--border-color); overflow: hidden;">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Order #</th>
+          <th>Date</th>
+          <th>Items</th>
+          <th>Total</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ord in orders %}
+        <tr>
+          <td><strong style="color: var(--text-primary);">#{{ ord.order_number }}</strong></td>
+          <td style="font-size: 13px; color: var(--text-secondary);">{{ ord.created_at.strftime('%Y-%m-%d') }}</td>
+          <td style="font-size: 13px;">{{ ord.items.count() }} item(s)</td>
+          <td><strong style="color: var(--text-primary); font-family: var(--font-heading);">${{ "%.2f"|format(ord.total_amount) }}</strong></td>
+          <td>
+            <span class="badge-status status-{{ ord.status.lower() }}">{{ ord.status }}</span>
+          </td>
+          <td>
+            <a href="{{ url_for('orders.order_detail', order_number=ord.order_number) }}" class="btn btn-secondary btn-sm">VIEW DETAILS</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="text-align: center; padding: 80px 20px; background: #fafafa; border: 1px solid var(--border-color);">
+    <p style="font-size: 16px; color: var(--text-secondary); margin-bottom: 16px;">You haven't placed any orders yet.</p>
+    <a href="{{ url_for('products.catalogue') }}" class="btn btn-primary">START SHOPPING</a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
